@@ -24,6 +24,7 @@ export class DefaultLastReleaseResolver implements LastReleaseResolver {
 
         currentTag = tagFormatter.IsValid(currentTag) ? currentTag : '';
         const isTagged = currentTag !== '';
+        core.info(isTagged ? `Checked out tag is ${currentTag}`: `Current commit not tagged`);
 
         const [currentMajor, currentMinor, currentPatch] = !!currentTag ? tagFormatter.Parse(currentTag) : [null, null, null];
 
@@ -32,24 +33,22 @@ export class DefaultLastReleaseResolver implements LastReleaseResolver {
         let tag = '';
         try {
             const refPrefixPattern = this.useBranches ? 'refs/heads/' : 'refs/tags/';
+            const command = `git for-each-ref --sort=-v:*refname --format=%(refname:short) --merged=${current} ${refPrefixPattern}${releasePattern}`;
+            const tags = (await cmd(command)).split('\n')
+            tagsCount = tags.length;
+            core.info(`Found the follwing repo tags: ${tags.join(' ').trim()}`);
             if (!!currentTag) {
                 // If we already have the current branch tagged, we are checking for the previous one
                 // so that we will have an accurate increment (assuming the new tag is the expected one)
-                const command = `git for-each-ref --sort=-v:*refname --format=%(refname:short) --merged=${current} ${refPrefixPattern}${releasePattern}`;
-                const tags = (await cmd(command)).split('\n')
-                tagsCount = tags.length;
                 tag = tags
                     .find(t => tagFormatter.IsValid(t) && t !== currentTag) || '';
 
             } else {
-                const command = `git for-each-ref --sort=-v:*refname --format=%(refname:short) --merged=${current} ${refPrefixPattern}${releasePattern}`;
-                const tags = (await cmd(command)).split('\n')
-                tagsCount = tags.length;
                 tag = tags
                     .find(t => tagFormatter.IsValid(t)) || '';
             }
-
             tag = tag.trim();
+            core.info(`Tags matching format, ${releasePattern} are: ${tags.join(' ').trim()}`);
         }
         catch (err) {
             tag = '';
@@ -61,7 +60,6 @@ export class DefaultLastReleaseResolver implements LastReleaseResolver {
                 // Since there is no remote, we assume that there are no other tags to pull. In
                 // practice this isn't likely to happen, but it keeps the test output from being
                 // polluted with a bunch of warnings.
-
                 if (tagsCount > 0) {
                     core.warning(`None of the ${tagsCount} tags(s) found were valid version tags for the present configuration. If this is unexpected, check to ensure that the configuration is correct and matches the tag format you are using.`);
                 } else {
