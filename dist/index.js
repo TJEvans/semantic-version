@@ -1047,28 +1047,28 @@ class DefaultLastReleaseResolver {
             let currentTag = (yield (0, CommandRunner_1.cmd)(`git tag --points-at ${current} ${releasePattern}`)).trim();
             currentTag = tagFormatter.IsValid(currentTag) ? currentTag : '';
             const isTagged = currentTag !== '';
+            core.info(isTagged ? `Checked out tag is ${currentTag}` : `Current commit not tagged`);
             const [currentMajor, currentMinor, currentPatch] = !!currentTag ? tagFormatter.Parse(currentTag) : [null, null, null];
             let tagsCount = 0;
             let tag = '';
             try {
                 const refPrefixPattern = this.useBranches ? 'refs/heads/' : 'refs/tags/';
+                const command = `git for-each-ref --sort=-v:*refname --format=%(refname:short) --merged=${current} ${refPrefixPattern}${releasePattern}`;
+                const tags = (yield (0, CommandRunner_1.cmd)(command)).split('\n');
+                tagsCount = tags.length;
+                core.info(`Found the follwing repo tags: ${tags.join(' ').trim()}`);
                 if (!!currentTag) {
                     // If we already have the current branch tagged, we are checking for the previous one
                     // so that we will have an accurate increment (assuming the new tag is the expected one)
-                    const command = `git for-each-ref --sort=-v:*refname --format=%(refname:short) --merged=${current} ${refPrefixPattern}${releasePattern}`;
-                    const tags = (yield (0, CommandRunner_1.cmd)(command)).split('\n');
-                    tagsCount = tags.length;
                     tag = tags
                         .find(t => tagFormatter.IsValid(t) && t !== currentTag) || '';
                 }
                 else {
-                    const command = `git for-each-ref --sort=-v:*refname --format=%(refname:short) --merged=${current} ${refPrefixPattern}${releasePattern}`;
-                    const tags = (yield (0, CommandRunner_1.cmd)(command)).split('\n');
-                    tagsCount = tags.length;
                     tag = tags
                         .find(t => tagFormatter.IsValid(t)) || '';
                 }
                 tag = tag.trim();
+                core.info(`Tags matching format, ${releasePattern} are: ${tags.join(' ').trim()}`);
             }
             catch (err) {
                 tag = '';
