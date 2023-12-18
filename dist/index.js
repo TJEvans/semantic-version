@@ -48,15 +48,19 @@ const cmd = (command, ...args) => __awaiter(void 0, void 0, void 0, function* ()
     if (debugManager.isReplayMode()) {
         return debugManager.replayCommand(command, args);
     }
-    let output = '', errors = '';
+    let output = "", errors = "";
     const options = {
         silent: true,
         listeners: {
-            stdout: (data) => { output += data.toString(); },
-            stderr: (data) => { errors += data.toString(); },
+            stdout: (data) => {
+                output += data.toString();
+            },
+            stderr: (data) => {
+                errors += data.toString();
+            },
             ignoreReturnCode: true,
-            silent: true
-        }
+            silent: true,
+        },
     };
     let caughtError = null;
     try {
@@ -96,16 +100,24 @@ class ConfigurationProvider {
         this.config = config;
         DebugManager_1.DebugManager.getInstance().initializeConfig(config);
     }
-    GetCurrentCommitResolver() { return new DefaultCurrentCommitResolver_1.DefaultCurrentCommitResolver(this.config); }
-    GetLastReleaseResolver() { return new DefaultLastReleaseResolver_1.DefaultLastReleaseResolver(this.config); }
-    GetCommitsProvider() { return new DefaultCommitsProvider_1.DefaultCommitsProvider(this.config); }
+    GetCurrentCommitResolver() {
+        return new DefaultCurrentCommitResolver_1.DefaultCurrentCommitResolver(this.config);
+    }
+    GetLastReleaseResolver() {
+        return new DefaultLastReleaseResolver_1.DefaultLastReleaseResolver(this.config);
+    }
+    GetCommitsProvider() {
+        return new DefaultCommitsProvider_1.DefaultCommitsProvider(this.config);
+    }
     GetVersionClassifier() {
         if (this.config.bumpEachCommit) {
             return new BumpAlwaysVersionClassifier_1.BumpAlwaysVersionClassifier(this.config);
         }
         return new DefaultVersionClassifier_1.DefaultVersionClassifier(this.config);
     }
-    GetVersionFormatter() { return new DefaultVersionFormatter_1.DefaultVersionFormatter(this.config); }
+    GetVersionFormatter() {
+        return new DefaultVersionFormatter_1.DefaultVersionFormatter(this.config);
+    }
     GetTagFormatter(branchName) {
         if (this.config.versionFromBranch) {
             return new BranchVersioningTagFormatter_1.BranchVersioningTagFormatter(this.config, branchName);
@@ -114,8 +126,10 @@ class ConfigurationProvider {
     }
     GetUserFormatter() {
         switch (this.config.userFormatType) {
-            case 'json': return new JsonUserFormatter_1.JsonUserFormatter(this.config);
-            case 'csv': return new CsvUserFormatter_1.CsvUserFormatter(this.config);
+            case "json":
+                return new JsonUserFormatter_1.JsonUserFormatter(this.config);
+            case "csv":
+                return new CsvUserFormatter_1.CsvUserFormatter(this.config);
             default:
                 throw new Error(`Unknown user format type: ${this.config.userFormatType}, supported types: json, csv`);
         }
@@ -173,7 +187,6 @@ class DebugManager {
         this.replayMode = false;
         this.diagnosticInfo = new DiagnosticInfo();
     }
-    ;
     /** Enables replay mode and loads the diagnostic information from the specified string */
     replayFromDiagnostics(diagnostics) {
         this.debugEnabled = false;
@@ -182,7 +195,7 @@ class DebugManager {
     }
     /** Returns a JSON string containing the diagnostic information for this run */
     getDebugOutput(emptyRepo = false) {
-        return this.isDebugEnabled() ? JSON.stringify(this.diagnosticInfo) : '';
+        return this.isDebugEnabled() ? JSON.stringify(this.diagnosticInfo) : "";
     }
     /** Records a command and its output for diagnostic purposes */
     recordCommand(command, args, output, stderr, error) {
@@ -194,9 +207,10 @@ class DebugManager {
     /** Replays the specified command and returns the output */
     replayCommand(command, args) {
         if (this.diagnosticInfo === null) {
-            throw new Error('No diagnostic information available for replay');
+            throw new Error("No diagnostic information available for replay");
         }
-        const commandResult = this.diagnosticInfo.commands.find(c => c.command === command && JSON.stringify(c.args) === JSON.stringify(args));
+        const commandResult = this.diagnosticInfo.commands.find((c) => c.command === command &&
+            JSON.stringify(c.args) === JSON.stringify(args));
         if (!commandResult) {
             throw new Error(`No result found in diagnostic for command "${command}"`);
         }
@@ -315,7 +329,7 @@ function runAction(configurationProvider) {
         const debugManager = DebugManager_1.DebugManager.getInstance();
         if (yield currentCommitResolver.IsEmptyRepoAsync()) {
             const versionInfo = new VersionInformation_1.VersionInformation(0, 0, 0, 0, VersionType_1.VersionType.None, [], false, false);
-            return new VersionResult_1.VersionResult(versionInfo.major, versionInfo.minor, versionInfo.patch, versionInfo.increment, versionInfo.type, versionFormatter.Format(versionInfo), tagFormatter.Format(versionInfo), versionInfo.changed, versionInfo.isTagged, userFormatter.Format('author', []), '', '', tagFormatter.Parse(tagFormatter.Format(versionInfo)).join('.'), debugManager.getDebugOutput(true));
+            return new VersionResult_1.VersionResult(versionInfo.major, versionInfo.minor, versionInfo.patch, versionInfo.increment, versionInfo.type, versionFormatter.Format(versionInfo), tagFormatter.Format(versionInfo), versionInfo.changed, versionInfo.isTagged, userFormatter.Format("author", []), "", "", tagFormatter.Parse(tagFormatter.Format(versionInfo)).join("."), debugManager.getDebugOutput(true));
         }
         const currentCommit = yield currentCommitResolver.ResolveAsync();
         const lastRelease = yield lastReleaseResolver.ResolveAsync(currentCommit, tagFormatter);
@@ -327,8 +341,7 @@ function runAction(configurationProvider) {
         // version information to be used by the formatters
         let versionInfo = new VersionInformation_1.VersionInformation(major, minor, patch, increment, type, commitSet.commits, changed, isTagged);
         // Group all the authors together, count the number of commits per author
-        const allAuthors = versionInfo.commits
-            .reduce((acc, commit) => {
+        const allAuthors = versionInfo.commits.reduce((acc, commit) => {
             const key = `${commit.author} <${commit.authorEmail}>`;
             acc[key] = acc[key] || { n: commit.author, e: commit.authorEmail, c: 0 };
             acc[key].c++;
@@ -337,7 +350,7 @@ function runAction(configurationProvider) {
         const authors = Object.values(allAuthors)
             .map((u) => new UserInfo_1.UserInfo(u.n, u.e, u.c))
             .sort((a, b) => b.commits - a.commits);
-        return new VersionResult_1.VersionResult(versionInfo.major, versionInfo.minor, versionInfo.patch, versionInfo.increment, versionInfo.type, versionFormatter.Format(versionInfo), tagFormatter.Format(versionInfo), versionInfo.changed, versionInfo.isTagged, userFormatter.Format('author', authors), currentCommit, lastRelease.hash, `${lastRelease.major}.${lastRelease.minor}.${lastRelease.patch}`, debugManager.getDebugOutput());
+        return new VersionResult_1.VersionResult(versionInfo.major, versionInfo.minor, versionInfo.patch, versionInfo.increment, versionInfo.type, versionFormatter.Format(versionInfo), tagFormatter.Format(versionInfo), versionInfo.changed, versionInfo.isTagged, userFormatter.Format("author", authors), currentCommit, lastRelease.hash, `${lastRelease.major}.${lastRelease.minor}.${lastRelease.patch}`, debugManager.getDebugOutput());
     });
 }
 exports.runAction = runAction;
@@ -357,17 +370,17 @@ const DefaultTagFormatter_1 = __nccwpck_require__(4808);
 class BranchVersioningTagFormatter extends DefaultTagFormatter_1.DefaultTagFormatter {
     getRegex(pattern) {
         if (/^\/.+\/[i]*$/.test(pattern)) {
-            const regexEnd = pattern.lastIndexOf('/');
-            const parsedFlags = pattern.slice(pattern.lastIndexOf('/') + 1);
+            const regexEnd = pattern.lastIndexOf("/");
+            const parsedFlags = pattern.slice(pattern.lastIndexOf("/") + 1);
             return new RegExp(pattern.slice(1, regexEnd), parsedFlags);
         }
         return new RegExp(pattern);
     }
     constructor(config, branchName) {
         super(config);
-        const pattern = config.versionFromBranch === true ?
-            new RegExp("[0-9]+.[0-9]+$|[0-9]+$") :
-            this.getRegex(config.versionFromBranch);
+        const pattern = config.versionFromBranch === true
+            ? new RegExp("[0-9]+.[0-9]+$|[0-9]+$")
+            : this.getRegex(config.versionFromBranch);
         const result = pattern.exec(branchName);
         if (result === null) {
             this.major = NaN;
@@ -386,7 +399,7 @@ class BranchVersioningTagFormatter extends DefaultTagFormatter_1.DefaultTagForma
                 throw new Error(`Unable to parse version from branch named '${branchName}' using pattern '${pattern}'`);
         }
         this.onVersionBranch = true;
-        const versionValues = branchVersion.split('.');
+        const versionValues = branchVersion.split(".");
         if (versionValues.length > 2) {
             throw new Error(`The version string '${branchVersion}' parsed from branch '${branchName}' is invalid. It must be in the format 'major.minor' or 'major'`);
         }
@@ -407,9 +420,9 @@ class BranchVersioningTagFormatter extends DefaultTagFormatter_1.DefaultTagForma
             return pattern;
         }
         if (this.minor === undefined) {
-            return pattern.replace('*[0-9].*[0-9].*[0-9]', `${this.major}.*[0-9].*[0-9]`);
+            return pattern.replace("*[0-9].*[0-9].*[0-9]", `${this.major}.*[0-9].*[0-9]`);
         }
-        return pattern.replace('*[0-9].*[0-9].*[0-9]', `${this.major}.${this.minor}.*[0-9]`);
+        return pattern.replace("*[0-9].*[0-9].*[0-9]", `${this.major}.${this.minor}.*[0-9]`);
     }
     IsValid(tag) {
         if (!this.onVersionBranch) {
@@ -452,7 +465,7 @@ class CsvUserFormatter {
         // placeholder for consistency with other formatters
     }
     Format(type, users) {
-        return users.map(user => `${user.name} <${user.email}>`).join(', ');
+        return users.map((user) => `${user.name} <${user.email}>`).join(", ");
     }
 }
 exports.CsvUserFormatter = CsvUserFormatter;
@@ -472,7 +485,7 @@ class DefaultTagFormatter {
     constructor(config) {
         this.namespace = config.namespace;
         this.tagPrefix = config.tagPrefix;
-        this.namespaceSeperator = '-'; // maybe make configurable in the future
+        this.namespaceSeperator = "-"; // maybe make configurable in the future
     }
     Format(versionInfo) {
         const result = `${this.tagPrefix}${versionInfo.major}.${versionInfo.minor}.${versionInfo.patch}`;
@@ -488,20 +501,20 @@ class DefaultTagFormatter {
         return `${this.tagPrefix}*[0-9].*[0-9].*[0-9]`;
     }
     Parse(tag) {
-        if (tag === '') {
+        if (tag === "") {
             return [0, 0, 0];
         }
         let tagParts = tag
-            .replace(this.tagPrefix, '<--!PREFIX!-->')
-            .replace(this.namespace, '<--!NAMESPACE!-->')
-            .split('/');
+            .replace(this.tagPrefix, "<--!PREFIX!-->")
+            .replace(this.namespace, "<--!NAMESPACE!-->")
+            .split("/");
         const stripedTag = tagParts[tagParts.length - 1]
-            .replace('<--!PREFIX!-->', this.tagPrefix)
-            .replace('<--!NAMESPACE!-->', this.namespace);
+            .replace("<--!PREFIX!-->", this.tagPrefix)
+            .replace("<--!NAMESPACE!-->", this.namespace);
         let versionValues = stripedTag
             .substring(this.tagPrefix.length)
-            .slice(0, this.namespace === '' ? 999 : -(this.namespace.length + 1))
-            .split('.');
+            .slice(0, this.namespace === "" ? 999 : -(this.namespace.length + 1))
+            .split(".");
         let major = parseInt(versionValues[0]);
         let minor = versionValues.length > 1 ? parseInt(versionValues[1]) : 0;
         let patch = versionValues.length > 2 ? parseInt(versionValues[2]) : 0;
@@ -510,9 +523,8 @@ class DefaultTagFormatter {
         }
         return [major, minor, patch];
     }
-    ;
     IsValid(tag) {
-        const regexEscape = (literal) => literal.replace(/\W/g, '\\$&');
+        const regexEscape = (literal) => literal.replace(/\W/g, "\\$&");
         const tagPrefix = regexEscape(this.tagPrefix);
         const namespaceSeperator = regexEscape(this.namespaceSeperator);
         const namespace = regexEscape(this.namespace);
@@ -540,10 +552,10 @@ class DefaultVersionFormatter {
     }
     Format(versionInfo) {
         return this.formatString
-            .replace('${major}', versionInfo.major.toString())
-            .replace('${minor}', versionInfo.minor.toString())
-            .replace('${patch}', versionInfo.patch.toString())
-            .replace('${increment}', versionInfo.increment.toString());
+            .replace("${major}", versionInfo.major.toString())
+            .replace("${minor}", versionInfo.minor.toString())
+            .replace("${patch}", versionInfo.patch.toString())
+            .replace("${increment}", versionInfo.increment.toString());
     }
 }
 exports.DefaultVersionFormatter = DefaultVersionFormatter;
@@ -563,8 +575,8 @@ class JsonUserFormatter {
         // placeholder for consistency with other formatters
     }
     Format(type, users) {
-        let result = users.map(u => ({ name: u.name, email: u.email }));
-        return JSON.stringify(result).replace('\n', '');
+        let result = users.map((u) => ({ name: u.name, email: u.email }));
+        return JSON.stringify(result).replace("\n", "");
     }
 }
 exports.JsonUserFormatter = JsonUserFormatter;
@@ -616,14 +628,14 @@ const ConfigurationProvider_1 = __nccwpck_require__(2614);
 const core = __importStar(__nccwpck_require__(2186));
 const VersionType_1 = __nccwpck_require__(895);
 function setOutput(versionResult) {
-    const { major, minor, patch, increment, versionType, formattedVersion, versionTag, changed, isTagged, authors, currentCommit, previousCommit, previousVersion, debugOutput } = versionResult;
+    const { major, minor, patch, increment, versionType, formattedVersion, versionTag, changed, isTagged, authors, currentCommit, previousCommit, previousVersion, debugOutput, } = versionResult;
     const repository = process.env.GITHUB_REPOSITORY;
     if (!changed) {
-        core.info('No changes detected for this commit');
+        core.info("No changes detected for this commit");
     }
     core.info(`Version is ${formattedVersion}`);
     if (repository !== undefined) {
-        core.info(`To create a release for this version, go to https://github.com/${repository}/releases/new?tag=${versionTag}&target=${currentCommit.split('/').slice(-1)[0]}`);
+        core.info(`To create a release for this version, go to https://github.com/${repository}/releases/new?tag=${versionTag}&target=${currentCommit.split("/").slice(-1)[0]}`);
     }
     core.setOutput("version", formattedVersion);
     core.setOutput("major", major.toString());
@@ -643,51 +655,51 @@ function setOutput(versionResult) {
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         function toBool(value) {
-            if (!value || value.toLowerCase() === 'false') {
+            if (!value || value.toLowerCase() === "false") {
                 return false;
             }
-            else if (value.toLowerCase() === 'true') {
+            else if (value.toLowerCase() === "true") {
                 return true;
             }
             return false;
         }
         function toStringOrBool(value) {
-            if (!value || value === 'false') {
+            if (!value || value === "false") {
                 return false;
             }
-            if (value === 'true') {
+            if (value === "true") {
                 return true;
             }
             return value;
         }
         const config = {
-            branch: core.getInput('branch'),
-            tagPrefix: core.getInput('tag_prefix'),
-            useBranches: toBool(core.getInput('use_branches')),
-            versionFromBranch: toStringOrBool(core.getInput('version_from_branch')),
-            majorPattern: core.getInput('major_pattern'),
-            minorPattern: core.getInput('minor_pattern'),
-            majorFlags: core.getInput('major_regexp_flags'),
-            minorFlags: core.getInput('minor_regexp_flags'),
-            versionFormat: core.getInput('version_format'),
-            changePath: core.getInput('change_path'),
-            namespace: core.getInput('namespace'),
-            bumpEachCommit: toBool(core.getInput('bump_each_commit')),
-            searchCommitBody: toBool(core.getInput('search_commit_body')),
-            userFormatType: core.getInput('user_format_type'),
-            enablePrereleaseMode: toBool(core.getInput('enable_prerelease_mode')),
-            bumpEachCommitPatchPattern: core.getInput('bump_each_commit_patch_pattern'),
-            debug: toBool(core.getInput('debug')),
-            replay: ''
+            branch: core.getInput("branch"),
+            tagPrefix: core.getInput("tag_prefix"),
+            useBranches: toBool(core.getInput("use_branches")),
+            versionFromBranch: toStringOrBool(core.getInput("version_from_branch")),
+            majorPattern: core.getInput("major_pattern"),
+            minorPattern: core.getInput("minor_pattern"),
+            majorFlags: core.getInput("major_regexp_flags"),
+            minorFlags: core.getInput("minor_regexp_flags"),
+            versionFormat: core.getInput("version_format"),
+            changePath: core.getInput("change_path"),
+            namespace: core.getInput("namespace"),
+            bumpEachCommit: toBool(core.getInput("bump_each_commit")),
+            searchCommitBody: toBool(core.getInput("search_commit_body")),
+            userFormatType: core.getInput("user_format_type"),
+            enablePrereleaseMode: toBool(core.getInput("enable_prerelease_mode")),
+            bumpEachCommitPatchPattern: core.getInput("bump_each_commit_patch_pattern"),
+            debug: toBool(core.getInput("debug")),
+            replay: "",
         };
         if (config.useBranches) {
             core.warning(`The 'use_branches' input option is deprecated, please see the documentation for more information on how to use branches`);
         }
-        if (config.versionFormat === '' && core.getInput('format') !== '') {
+        if (config.versionFormat === "" && core.getInput("format") !== "") {
             core.warning(`The 'format' input is deprecated, use 'versionFormat' instead`);
-            config.versionFormat = core.getInput('format');
+            config.versionFormat = core.getInput("format");
         }
-        if (core.getInput('short_tags') !== '') {
+        if (core.getInput("short_tags") !== "") {
             core.warning(`The 'short_tags' input option is no longer supported`);
         }
         const configurationProvider = new ConfigurationProvider_1.ConfigurationProvider(config);
@@ -724,9 +736,9 @@ class BumpAlwaysVersionClassifier extends DefaultVersionClassifier_1.DefaultVers
     constructor(config) {
         super(config);
         this.enablePrereleaseMode = config.enablePrereleaseMode;
-        this.patchPattern = !config.bumpEachCommitPatchPattern ?
-            _ => true :
-            this.parsePattern(config.bumpEachCommitPatchPattern, "", config.searchCommitBody);
+        this.patchPattern = !config.bumpEachCommitPatchPattern
+            ? (_) => true
+            : this.parsePattern(config.bumpEachCommitPatchPattern, "", config.searchCommitBody);
     }
     ClassifyAsync(lastRelease, commitSet) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -747,7 +759,10 @@ class BumpAlwaysVersionClassifier extends DefaultVersionClassifier_1.DefaultVers
                     type = VersionType_1.VersionType.Minor;
                 }
                 else if (this.patchPattern(commit) ||
-                    (major === 0 && minor === 0 && patch === 0 && commitSet.commits.length > 0)) {
+                    (major === 0 &&
+                        minor === 0 &&
+                        patch === 0 &&
+                        commitSet.commits.length > 0)) {
                     type = VersionType_1.VersionType.Patch;
                 }
                 else {
@@ -887,49 +902,47 @@ class DefaultCommitsProvider {
         return __awaiter(this, void 0, void 0, function* () {
             const logSplitter = `@@@START_RECORD`;
             const formatPlaceholders = Object.entries({
-                hash: '%H',
-                subject: '%s',
-                body: '%b',
-                author: '%an',
-                authorEmail: '%ae',
-                authorDate: '%aI',
-                committer: '%cn',
-                committerEmail: '%ce',
-                committerDate: '%cI',
-                tags: '%d'
+                hash: "%H",
+                subject: "%s",
+                body: "%b",
+                author: "%an",
+                authorEmail: "%ae",
+                authorDate: "%aI",
+                committer: "%cn",
+                committerEmail: "%ce",
+                committerDate: "%cI",
+                tags: "%d",
             });
-            const pretty = logSplitter + '%n' + formatPlaceholders
-                .map(x => `@@@${x[0]}%n${x[1]}`)
-                .join('%n');
-            var logCommand = `git log --pretty="${pretty}" --author-date-order ${(startHash === '' ? endHash : `${startHash}..${endHash}`)}`;
-            if (this.changePath !== '') {
+            const pretty = logSplitter +
+                "%n" +
+                formatPlaceholders.map((x) => `@@@${x[0]}%n${x[1]}`).join("%n");
+            var logCommand = `git log --pretty="${pretty}" --author-date-order ${startHash === "" ? endHash : `${startHash}..${endHash}`}`;
+            if (this.changePath !== "") {
                 logCommand += ` -- ${this.changePath}`;
             }
             const log = yield (0, CommandRunner_1.cmd)(logCommand);
-            const entries = log
-                .split(logSplitter)
-                .slice(1);
-            const commits = entries.map(entry => {
+            const entries = log.split(logSplitter).slice(1);
+            const commits = entries.map((entry) => {
                 const fields = entry
                     .split(`@@@`)
                     .slice(1)
                     .reduce((acc, value) => {
-                    const firstLine = value.indexOf('\n');
+                    const firstLine = value.indexOf("\n");
                     const key = value.substring(0, firstLine);
                     acc[key] = value.substring(firstLine + 1).trim();
                     return acc;
                 }, {});
                 const tags = fields.tags
-                    .split(',')
+                    .split(",")
                     .map((v) => v.trim())
-                    .filter((v) => v.startsWith('tags: '))
+                    .filter((v) => v.startsWith("tags: "))
                     .map((v) => v.substring(5).trim());
                 return new CommitInfo_1.CommitInfo(fields.hash, fields.subject, fields.body, fields.author, fields.authorEmail, new Date(fields.authorDate), fields.committer, fields.committerEmail, new Date(fields.committerDate), tags);
             });
             // check for changes
             let changed = true;
-            if (this.changePath !== '') {
-                if (startHash === '') {
+            if (this.changePath !== "") {
+                if (startHash === "") {
                     const changedFiles = yield (0, CommandRunner_1.cmd)(`git log --name-only --oneline ${endHash} -- ${this.changePath}`);
                     changed = changedFiles.length > 0;
                 }
@@ -970,21 +983,23 @@ class DefaultCurrentCommitResolver {
     }
     ResolveAsync() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.branch === 'HEAD') {
-                return (yield (0, CommandRunner_1.cmd)('git', 'rev-parse', 'HEAD')).trim();
+            if (this.branch === "HEAD") {
+                return (yield (0, CommandRunner_1.cmd)("git", "rev-parse", "HEAD")).trim();
             }
             return this.branch;
         });
     }
     IsEmptyRepoAsync() {
         return __awaiter(this, void 0, void 0, function* () {
-            let lastCommitAll = (yield (0, CommandRunner_1.cmd)('git', 'rev-list', '-n1', '--all')).trim();
-            return lastCommitAll === '';
+            let lastCommitAll = (yield (0, CommandRunner_1.cmd)("git", "rev-list", "-n1", "--all")).trim();
+            return lastCommitAll === "";
         });
     }
     ResolveBranchNameAsync() {
         return __awaiter(this, void 0, void 0, function* () {
-            const branchName = this.branch == 'HEAD' ? yield (0, CommandRunner_1.cmd)('git', 'rev-parse', '--abbrev-ref', 'HEAD') : this.branch;
+            const branchName = this.branch == "HEAD"
+                ? yield (0, CommandRunner_1.cmd)("git", "rev-parse", "--abbrev-ref", "HEAD")
+                : this.branch;
             return branchName.trim();
         });
     }
@@ -1045,36 +1060,39 @@ class DefaultLastReleaseResolver {
         return __awaiter(this, void 0, void 0, function* () {
             const releasePattern = tagFormatter.GetPattern();
             let currentTag = (yield (0, CommandRunner_1.cmd)(`git tag --points-at ${current} ${releasePattern}`)).trim();
-            currentTag = tagFormatter.IsValid(currentTag) ? currentTag : '';
-            const isTagged = currentTag !== '';
-            core.info(isTagged ? `Checked out tag is ${currentTag}` : `Current commit not tagged`);
-            const [currentMajor, currentMinor, currentPatch] = !!currentTag ? tagFormatter.Parse(currentTag) : [null, null, null];
+            currentTag = tagFormatter.IsValid(currentTag) ? currentTag : "";
+            const isTagged = currentTag !== "";
+            core.info(isTagged
+                ? `Checked out tag is ${currentTag}`
+                : `Current commit not tagged`);
+            const [currentMajor, currentMinor, currentPatch] = !!currentTag
+                ? tagFormatter.Parse(currentTag)
+                : [null, null, null];
             let tagsCount = 0;
-            let tag = '';
+            let tag = "";
             try {
-                const refPrefixPattern = this.useBranches ? 'refs/heads/' : 'refs/tags/';
+                const refPrefixPattern = this.useBranches ? "refs/heads/" : "refs/tags/";
                 const command = `git for-each-ref --sort=-v:*refname --format=%(refname:short) --merged=${current} ${refPrefixPattern}${releasePattern}`;
-                const tags = (yield (0, CommandRunner_1.cmd)(command)).split('\n');
+                const tags = (yield (0, CommandRunner_1.cmd)(command)).split("\n");
                 tagsCount = tags.length;
-                core.info(`Found the follwing repo tags: ${tags.join(' ').trim()}`);
+                core.info(`Found the follwing repo tags: ${tags.join(" ").trim()}`);
                 if (!!currentTag) {
                     // If we already have the current branch tagged, we are checking for the previous one
                     // so that we will have an accurate increment (assuming the new tag is the expected one)
-                    tag = tags
-                        .find(t => tagFormatter.IsValid(t) && t !== currentTag) || '';
+                    tag =
+                        tags.find((t) => tagFormatter.IsValid(t) && t !== currentTag) || "";
                 }
                 else {
-                    tag = tags
-                        .find(t => tagFormatter.IsValid(t)) || '';
+                    tag = tags.find((t) => tagFormatter.IsValid(t)) || "";
                 }
                 tag = tag.trim();
-                core.info(`Tags matching format, ${releasePattern} are: ${tags.join(' ').trim()}`);
+                core.info(`Tags matching format, ${releasePattern} are: ${tags.join(" ").trim()}`);
             }
             catch (err) {
-                tag = '';
+                tag = "";
             }
-            if (tag === '') {
-                if ((yield (0, CommandRunner_1.cmd)('git', 'remote')) !== '') {
+            if (tag === "") {
+                if ((yield (0, CommandRunner_1.cmd)("git", "remote")) !== "") {
                     // Since there is no remote, we assume that there are no other tags to pull. In
                     // practice this isn't likely to happen, but it keeps the test output from being
                     // polluted with a bunch of warnings.
@@ -1082,16 +1100,16 @@ class DefaultLastReleaseResolver {
                         core.warning(`None of the ${tagsCount} tags(s) found were valid version tags for the present configuration. If this is unexpected, check to ensure that the configuration is correct and matches the tag format you are using.`);
                     }
                     else {
-                        core.warning('No tags are present for this repository. If this is unexpected, check to ensure that tags have been pulled from the remote.');
+                        core.warning("No tags are present for this repository. If this is unexpected, check to ensure that tags have been pulled from the remote.");
                     }
                 }
-                const [major, minor, patch] = tagFormatter.Parse('');
+                const [major, minor, patch] = tagFormatter.Parse("");
                 // no release tags yet, use the initial commit as the root
-                return new ReleaseInformation_1.ReleaseInformation(major, minor, patch, '', currentMajor, currentMinor, currentPatch, isTagged);
+                return new ReleaseInformation_1.ReleaseInformation(major, minor, patch, "", currentMajor, currentMinor, currentPatch, isTagged);
             }
             // parse the version tag
             const [major, minor, patch] = tagFormatter.Parse(tag);
-            const root = yield (0, CommandRunner_1.cmd)('git', `merge-base`, tag, current);
+            const root = yield (0, CommandRunner_1.cmd)("git", `merge-base`, tag, current);
             return new ReleaseInformation_1.ReleaseInformation(major, minor, patch, root.trim(), currentMajor, currentMinor, currentPatch, isTagged);
         });
     }
@@ -1128,18 +1146,19 @@ class DefaultVersionClassifier {
     }
     parsePattern(pattern, flags, searchBody) {
         if (/^\/.+\/[i]*$/.test(pattern)) {
-            const regexEnd = pattern.lastIndexOf('/');
-            const parsedFlags = pattern.slice(pattern.lastIndexOf('/') + 1);
+            const regexEnd = pattern.lastIndexOf("/");
+            const parsedFlags = pattern.slice(pattern.lastIndexOf("/") + 1);
             const regex = new RegExp(pattern.slice(1, regexEnd), parsedFlags || flags);
-            return searchBody ?
-                (commit) => regex.test(commit.subject) || regex.test(commit.body) :
-                (commit) => regex.test(commit.subject);
+            return searchBody
+                ? (commit) => regex.test(commit.subject) || regex.test(commit.body)
+                : (commit) => regex.test(commit.subject);
         }
         else {
             const matchString = pattern;
-            return searchBody ?
-                (commit) => commit.subject.includes(matchString) || commit.body.includes(matchString) :
-                (commit) => commit.subject.includes(matchString);
+            return searchBody
+                ? (commit) => commit.subject.includes(matchString) ||
+                    commit.body.includes(matchString)
+                : (commit) => commit.subject.includes(matchString);
         }
     }
     getNextVersion(current, type) {
@@ -1149,9 +1168,17 @@ class DefaultVersionClassifier {
                     return { major: current.major, minor: current.minor + 1, patch: 0 };
                 case VersionType_1.VersionType.Minor:
                 case VersionType_1.VersionType.Patch:
-                    return { major: current.major, minor: current.minor, patch: current.patch + 1 };
+                    return {
+                        major: current.major,
+                        minor: current.minor,
+                        patch: current.patch + 1,
+                    };
                 case VersionType_1.VersionType.None:
-                    return { major: current.major, minor: current.minor, patch: current.patch };
+                    return {
+                        major: current.major,
+                        minor: current.minor,
+                        patch: current.patch,
+                    };
                 default:
                     throw new Error(`Unknown change type: ${type}`);
             }
@@ -1162,33 +1189,57 @@ class DefaultVersionClassifier {
             case VersionType_1.VersionType.Minor:
                 return { major: current.major, minor: current.minor + 1, patch: 0 };
             case VersionType_1.VersionType.Patch:
-                return { major: current.major, minor: current.minor, patch: current.patch + 1 };
+                return {
+                    major: current.major,
+                    minor: current.minor,
+                    patch: current.patch + 1,
+                };
             case VersionType_1.VersionType.None:
-                return { major: current.major, minor: current.minor, patch: current.patch };
+                return {
+                    major: current.major,
+                    minor: current.minor,
+                    patch: current.patch,
+                };
             default:
                 throw new Error(`Unknown change type: ${type}`);
         }
     }
     resolveCommitType(commitsSet) {
         if (commitsSet.commits.length === 0) {
-            return { type: VersionType_1.VersionType.None, increment: 0, changed: commitsSet.changed };
+            return {
+                type: VersionType_1.VersionType.None,
+                increment: 0,
+                changed: commitsSet.changed,
+            };
         }
         const commits = commitsSet.commits.reverse();
         let index = 1;
         for (let commit of commits) {
             if (this.majorPattern(commit)) {
-                return { type: VersionType_1.VersionType.Major, increment: commits.length - index, changed: commitsSet.changed };
+                return {
+                    type: VersionType_1.VersionType.Major,
+                    increment: commits.length - index,
+                    changed: commitsSet.changed,
+                };
             }
             index++;
         }
         index = 1;
         for (let commit of commits) {
             if (this.minorPattern(commit)) {
-                return { type: VersionType_1.VersionType.Minor, increment: commits.length - index, changed: commitsSet.changed };
+                return {
+                    type: VersionType_1.VersionType.Minor,
+                    increment: commits.length - index,
+                    changed: commitsSet.changed,
+                };
             }
             index++;
         }
-        return { type: VersionType_1.VersionType.Patch, increment: commitsSet.commits.length - 1, changed: true };
+        return {
+            type: VersionType_1.VersionType.Patch,
+            increment: commitsSet.commits.length - 1,
+            changed: true,
+        };
     }
     ClassifyAsync(lastRelease, commitSet) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -1202,7 +1253,9 @@ class DefaultVersionClassifier {
                 // - commit 2 - v1.0.0+1
                 // - commit 3 was tagged v2.0.0 - v2.0.0+0
                 // - commit 4 - v2.0.1+0
-                const versionsMatch = lastRelease.currentMajor === major && lastRelease.currentMinor === minor && lastRelease.currentPatch === patch;
+                const versionsMatch = lastRelease.currentMajor === major &&
+                    lastRelease.currentMinor === minor &&
+                    lastRelease.currentPatch === patch;
                 const currentIncrement = versionsMatch ? increment : 0;
                 return new VersionClassification_1.VersionClassification(VersionType_1.VersionType.None, currentIncrement, false, lastRelease.currentMajor, lastRelease.currentMinor, lastRelease.currentPatch);
             }
